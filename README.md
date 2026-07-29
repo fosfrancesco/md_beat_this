@@ -1,6 +1,8 @@
-# MD Beat This — supporting material
+# Masked Diffusion Enables Coherent Beat Tracking
 
-Supporting material for the ISMIR 2026 paper "Masked Diffusion Enables Coherent Beat Tracking" by Francesco Foscarin, Filip Korzeniowski and Richard Vogl (Moises AI).
+Supporting material for the ISMIR 2026 paper
+
+> F. Foscarin, F. Korzeniowski, and R. Vogl, "Masked Diffusion Enables Coherent Beat Tracking," in *Proceedings of the 27th International Society for Music Information Retrieval Conference (ISMIR)*, 2026.
 
 This repository provides **8-fold cross-validation** metrics (not in the paper), plus an **expanded version of Figure 4** in the paper, and the **GTZAN metrics**.
 
@@ -13,7 +15,7 @@ We release:
 * [Cross-validation results](#cross-validation-results)
 * [GTZAN results](#gtzan-results)
 * [Step study](#step-study)
-* [License / citation](#license--citation)
+* [Citation](#citation)
 
 ## Layout
 
@@ -51,13 +53,13 @@ By default it prints both tables; pass `--only-gtzan` to print only the GTZAN on
 
 ## Cross-validation results
 
-Datasets without downbeat annotations (`simac`, `smc`) are kept in the evaluation, but only beat metrics are reported for them (`—` in the downbeat columns).
+Datasets without downbeat annotations (`simac`, `smc`) are kept in the evaluation, but only beat metrics are reported for them (`—` in the downbeat columns). Tracks whose annotation file contains no beat at all are excluded, which affects a single Beatles track (`Revolution 9`).
 
 | Dataset | Beat N | Beat F | Beat CMLt | Beat AMLt | Downbeat N | Downbeat F | Downbeat CMLt | Downbeat AMLt |
 |---|---|---|---|---|---|---|---|---|
 | asap | 471 | 0.898 | 0.806 | 0.842 | 471 | 0.855 | 0.733 | 0.849 |
 | ballroom | 685 | 0.978 | 0.971 | 0.980 | 685 | 0.966 | 0.963 | 0.975 |
-| beatles | 180 | 0.934 | 0.850 | 0.943 | 179 | 0.894 | 0.769 | 0.878 |
+| beatles | 179 | 0.940 | 0.855 | 0.948 | 179 | 0.894 | 0.769 | 0.878 |
 | candombe | 35 | 0.994 | 0.995 | 0.995 | 35 | 0.994 | 0.998 | 0.998 |
 | filosax | 48 | 0.995 | 0.987 | 0.987 | 48 | 0.990 | 0.987 | 0.987 |
 | groove_midi | 336 | 0.920 | 0.862 | 0.913 | 336 | 0.800 | 0.761 | 0.884 |
@@ -74,7 +76,7 @@ Datasets without downbeat annotations (`simac`, `smc`) are kept in the evaluatio
 | simac | 595 | 0.760 | 0.483 | 0.870 | — | — | — | — |
 | smc | 217 | 0.611 | 0.489 | 0.643 | — | — | — | — |
 | tapcorrect | 101 | 0.923 | 0.810 | 0.918 | 101 | 0.870 | 0.700 | 0.836 |
-| **Mean (macro)** |  | **0.914** | **0.844** | **0.919** |  | **0.906** | **0.846** | **0.915** |
+| **Mean (macro)** |  | **0.915** | **0.844** | **0.919** |  | **0.906** | **0.846** | **0.915** |
 
 _Annotations: [beat_this_annotations@v1.1](https://github.com/CPJKU/beat_this_annotations/releases/tag/v1.1). See [Metrics reproducibility](#metrics-reproducibility) to recompute._
 
@@ -104,15 +106,13 @@ Single model vs. ensemble (3 models):
 
 ![Single vs. ensemble](figures/step_study_single_vs_ensemble.png)
 
-## License / citation
+## Citation
 
 ```bibtex
 @inproceedings{foscarin2026maskedbeat,
     author = {Francesco Foscarin and Filip Korzeniowski and Richard Vogl},
     title = {Masked Diffusion Enables Coherent Beat Tracking},
     year = 2026,
-    month = nov,
     booktitle = {Proceedings of the 27th International Society for Music Information Retrieval Conference (ISMIR)},
-    address = {Abu Dhabi, UAE},
 }
 ```

@@ -22,6 +22,10 @@ import numpy as np
 
 SKIP_FIRST = 5.0  # seconds; MIREX / Beat This! convention
 
+# Second column of both annotations (beat number within the bar) and
+# predictions (0 = beat, 1 = downbeat) marks a downbeat with 1.
+DOWNBEAT = 1.0
+
 METRIC_KEYS = ("F-measure", "CMLc", "CMLt", "AMLc", "AMLt")
 
 # Dataset folder names, shared between this repo and beat_this_annotations.
@@ -47,7 +51,7 @@ RWC_SUBSETS = [
     ("rwc-popular", "rwc_popular"),
     ("rwc-classical", "rwc_classical"),
     ("rwc-jazz", "rwc_jazz"),
-    ("rwc-royalty-free", "rwc_royalty_free"),
+    ("rwc-royalty-free", "rwc_royalty-free"),
 ]
 
 # GTZAN: three independent training runs; report mean ± std across runs.
@@ -55,23 +59,26 @@ GTZAN_RUNS = ("run1", "run2", "run3")
 
 
 def load_beats(path: Path) -> tuple[np.ndarray, np.ndarray | None]:
-    times, positions = [], []
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split()
-        times.append(float(parts[0]))
-        positions.append(float(parts[1]) if len(parts) > 1 else None)
-    t = np.asarray(times, dtype=np.float64)
-    if not times or all(p is None for p in positions):
-        return t, None
-    return t, np.asarray(positions, dtype=np.float64)
+    """Read beat times and, when present, the beat position of each beat.
+
+    Files hold one beat per line as whitespace-separated columns: the time in
+    seconds, then optionally the beat position. Files without a second column
+    (simac, smc and six GTZAN tracks) carry no downbeat information and yield
+    ``None`` positions. Harmonix additionally has a third (bar number) column,
+    which is ignored.
+    """
+    # Not mir_eval.io.load_labeled_events: it splits with maxsplit=1, so the eight
+    # three-column Harmonix files would yield beat positions like "2\t1".
+    rows = [line.split() for line in path.read_text().splitlines() if line.strip()]
+    times = np.array([float(r[0]) for r in rows], dtype=np.float64)
+    if not rows or len(rows[0]) == 1:
+        return times, None
+    return times, np.array([float(r[1]) for r in rows], dtype=np.float64)
 
 
 def score(ref_t: np.ndarray, est_t: np.ndarray) -> dict[str, float]:
-    ref_t = np.sort(ref_t[ref_t >= SKIP_FIRST])
-    est_t = np.sort(est_t[est_t >= SKIP_FIRST])
+    ref_t = mir_eval.beat.trim_beats(ref_t, min_beat_time=SKIP_FIRST)
+    est_t = mir_eval.beat.trim_beats(est_t, min_beat_time=SKIP_FIRST)
     f = mir_eval.beat.f_measure(ref_t, est_t)
     cmlc, cmlt, amlc, amlt = mir_eval.beat.continuity(ref_t, est_t)
     return {
@@ -96,15 +103,16 @@ def evaluate_dataset(
         if name_prefix is not None and not stem.startswith(name_prefix):
             continue
         ann = ann_dir / f"{stem}.beats"
-        if not ann.is_file():
-            continue
         ref_t, ref_p = load_beats(ann)
         est_t, est_p = load_beats(pred)
         if require_beat_positions and ref_p is None:
             continue
+        if ref_t.size == 0:
+            print(f"[skip] {ann}: no beats annotated", file=sys.stderr)
+            continue
         beats.append(score(ref_t, est_t))
-        if ref_p is not None and est_p is not None and np.any(ref_p == 1):
-            downs.append(score(ref_t[ref_p == 1], est_t[est_p == 1]))
+        if ref_p is not None and est_p is not None:
+            downs.append(score(ref_t[ref_p == DOWNBEAT], est_t[est_p == DOWNBEAT]))
     return beats, downs
 
 
@@ -130,12 +138,15 @@ def fmt_cv(n: int, m: dict[str, float] | None) -> str:
     return f"{n} | {m['F-measure']:.3f} | {m['CMLt']:.3f} | {m['AMLt']:.3f}"
 
 
-def print_mean_std_table(title: str, mean_std: dict[str, tuple[float, float]]) -> None:
-    print(f"| {title} | Mean ± Std |")
-    print("| --- | --- |")
+def print_mean_std_table(
+    beat: dict[str, tuple[float, float]],
+    downbeat: dict[str, tuple[float, float]],
+) -> None:
+    print("| Metric | Beat (mean ± std) | Downbeat (mean ± std) |")
+    print("| --- | --- | --- |")
     for k in METRIC_KEYS:
-        mean, std = mean_std[k]
-        print(f"| {k} | {mean:.3f} ± {std:.3f} |")
+        cells = " | ".join(f"{m:.3f} ± {s:.3f}" for m, s in (beat[k], downbeat[k]))
+        print(f"| {k} | {cells} |")
     print()
 
 
@@ -207,8 +218,9 @@ def print_gtzan_tables(pred_root: Path, ann_root: Path) -> None:
         down_aggs.append(md)
 
     print("### GTZAN (mean ± std over 3 runs)\n")
-    print_mean_std_table("Beat", mean_std_across_runs(beat_aggs))
-    print_mean_std_table("Downbeat", mean_std_across_runs(down_aggs))
+    print_mean_std_table(
+        mean_std_across_runs(beat_aggs), mean_std_across_runs(down_aggs)
+    )
 
 
 def main() -> None:
