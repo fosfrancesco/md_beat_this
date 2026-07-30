@@ -19,7 +19,7 @@ We release:
 
 ## Layout
 
-Cross-validation datasets:
+Cross-validation datasets (**single model** per track: the fold that held the track out):
 
 ```
 datasets/<dataset>/
@@ -28,7 +28,7 @@ datasets/<dataset>/
                  #              row 1 = downbeat logits, at 50 fps (22050 Hz / 441)
 ```
 
-GTZAN (three independently trained runs; metrics are mean ± std across runs):
+GTZAN (**ensemble** of 3 models per run; three independently trained runs; metrics are mean ± std across runs):
 
 ```
 datasets/gtzan/run{1,2,3}/
@@ -52,6 +52,10 @@ python evaluate.py --ann-root ./beat_this_annotations
 By default it prints both tables; pass `--only-gtzan` to print only the GTZAN one. Predictions are read from `./datasets` by default (override with `--pred-root`).
 
 ## Cross-validation results
+
+Predictions come from **single models** in an 8-fold setup: each track is inferred with the fold model that did not train on it (no ensembling across folds).
+
+Tracks longer than 30 seconds are processed in a block-autoregressive manner: the last 10 seconds of a snippet's predictions, excluding the final 2 seconds, are fed back in as an always-unmasked context for the next snippet.
 
 Datasets without downbeat annotations (`simac`, `smc`) are kept in the evaluation, but only beat metrics are reported for them (`—` in the downbeat columns). Tracks whose annotation file contains no beat at all are excluded, which affects a single Beatles track (`Revolution 9`).
 
@@ -82,7 +86,7 @@ _Annotations: [beat_this_annotations@v1.1](https://github.com/CPJKU/beat_this_an
 
 ## GTZAN results
 
-Metrics are the mean ± std across three independently trained runs (`gtzan/run1`, `gtzan/run2`, `gtzan/run3`). Unlike the cross-validation results above, tracks without downbeat annotations are dropped entirely here (6 tracks). The F-measure, CMLt and AMLt values above match the "Ours (8 inference steps)" row of Table 1 in the paper.
+Each of `gtzan/run1`, `run2`, and `run3` is an **ensemble of 3 models**, each trained from an independent seed. Reported metrics are the mean ± std across the three ensemble runs. Unlike the cross-validation results above, tracks without downbeat annotations are dropped entirely here (6 tracks). The F-measure, CMLt and AMLt values above match the "Ours (8 inference steps)" row of Table 1 in the paper.
 
 | Metric | Beat (mean ± std) | Downbeat (mean ± std) |
 | --- | --- | --- |
