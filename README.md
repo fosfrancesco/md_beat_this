@@ -1,6 +1,6 @@
 # Masked Diffusion Enables Coherent Beat Tracking
 
-Supporting material for the ISMIR 2026 paper
+Supporting material for the ISMIR 2026 paper, [available on arXiv](https://arxiv.org/abs/2608.04624)
 
 > F. Foscarin, F. Korzeniowski, and R. Vogl, "Masked Diffusion Enables Coherent Beat Tracking," in *Proceedings of the 27th International Society for Music Information Retrieval Conference (ISMIR)*, 2026.
 
