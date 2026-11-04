@@ -1,5 +1,7 @@
 # Masked Diffusion Enables Coherent Beat Tracking
 
+**This repo is still under construction. It could change** 
+
 Official inference code and models for the ISMIR 2026 paper "[Masked Diffusion Enables Coherent Beat Tracking](https://arxiv.org/abs/2608.04624)" by Francesco Foscarin, Filip Korzeniowski and Richard Vogl. Please [cite the paper](#citation) if you use any of this work.
 
 You can use the released models to detect beats and downbeats in your own audio files. We do not release training code or audio, but we provide our predictions for all evaluation datasets (and the activations for GTZAN), so results can be explored and metrics recomputed. We also report 8-fold cross-validation results (not in the paper) and an expanded version of Figure 4.
