@@ -1,3 +1,9 @@
 .DS_Store
 __pycache__/
 *.pyc
+checkpoints/
+scripts/
+*.egg-info/
+build/
+dist/
+.venv/
