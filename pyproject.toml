@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "md-beat-this"
+version = "0.1.0"
+description = "Masked diffusion beat and downbeat tracking with Beat This!"
+readme = "README.md"
+license = "CC-BY-NC-4.0"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Francesco Foscarin"},
+    {name = "Filip Korzeniowski"},
+    {name = "Richard Vogl"},
+]
+requires-python = ">=3.10"
+dependencies = [
+    "beat-this>=1.1",
+    "rotary-embedding-torch",
+    "torch",
+    "torchaudio",
+    "einops",
+    "numpy",
+    "soxr",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+eval = ["mir_eval"]
+
+[project.urls]
+Repository = "https://github.com/fosfrancesco/md_beat_this"
+Paper = "https://arxiv.org/abs/2608.04624"
+
+[project.scripts]
+md_beat_this = "md_beat_this.cli:main"
+
+[tool.setuptools]
+packages = ["md_beat_this", "md_beat_this.model"]
