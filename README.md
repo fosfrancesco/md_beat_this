@@ -73,8 +73,6 @@ You can also pass the path of a local checkpoint file or a URL.
 
 Results may be unfairly good on files the models were trained on. Use the `run*` models for GTZAN or your own data; for the other datasets we used, use the fold model that held each track out.
 
-All models use the inference settings of the paper: 8 unmasking steps, balanced frame-based unmasking, peak picking, and no DBN.
-
 ## Released predictions and activations
 
 The `results/` folder holds our predictions for every evaluation dataset, and the activations for GTZAN:
@@ -110,9 +108,9 @@ Each of `run1`, `run2` and `run3` is an ensemble of 3 models. Metrics are the me
 
 ### Cross-validation
 
-Each track is predicted by the single fold model that did not train on it (no ensembling across folds), [in snippets](#long-audio-files). Note that the folds of `asap`, `harmonix` and `rwc` [differ from the Beat This! ones](#by-mistake).
+Each track is predicted by the single fold model that did not train on it (no ensembling across folds), [in snippets](#long-audio-files). Note that the folds of `asap`, `harmonix` and `rwc` [differ from the Beat This! ones](#unintended).
 
-Datasets without downbeat annotations (`simac`, `smc`) only report beat metrics. Tracks whose annotation file contains no beat are excluded, which only affects the Beatles track `Revolution 9`. Three annotated tracks are not part of our evaluation: `Schumann_Toccata_WangY07M` and `Schumann_Toccata_no_repeat_DupreeF13M` (`asap`), and `hainsworth_179` (`hainsworth`).
+Datasets without downbeat annotations (`simac`, `smc`) only report beat metrics. Tracks whose annotation file contains no beat are excluded, which only affects the Beatles track `Revolution 9`.
 
 | Dataset | Beat N | Beat F | Beat CMLt | Beat AMLt | Downbeat N | Downbeat F | Downbeat CMLt | Downbeat AMLt |
 |---|---|---|---|---|---|---|---|---|
@@ -195,7 +193,7 @@ On top of the masked diffusion formulation (see the paper), we changed:
 * 300 training epochs instead of 150;
 * WSD (warmup-stable-decay) learning rate schedule instead of cosine, with 1000 warm-up steps and linear decay over the last 15% of steps;
 * leading and trailing silence is trimmed before inference (100 ms windows with an RMS below 1.5 × 10⁻³).
-### By mistake
+### Unintended
 
 Some differences were introduced by mistake when reimplementing our training code, 
 we expect them to not significantly influence the results:
@@ -205,7 +203,8 @@ we expect them to not significantly influence the results:
   * the mel filters are Slaney-normalized (`norm="slaney"`) instead of unnormalized;
   * the magnitude spectrogram is not normalized by the frame length;
   * the logarithmic compression is computed as `log(1000 x + 1)` instead of `log1p(1000 x)`, which only differs numerically;
-* the cross-validation folds of `asap`, `harmonix` and `rwc` differ from the `8-folds.split` files of [beat_this_annotations](https://github.com/CPJKU/beat_this_annotations/releases/tag/v1.1), so our cross-validation results on these three datasets are not computed on the same folds as the Beat This! ones. The other datasets use the same folds, and `results/cv_folds.tsv` lists the folds we used.
+* the cross-validation folds of `asap`, `harmonix` and `rwc` differ from the `8-folds.split` files of [beat_this_annotations](https://github.com/CPJKU/beat_this_annotations/releases/tag/v1.1), so our cross-validation results on these three datasets are not computed on the same folds as the Beat This! ones. The other datasets use the same folds, and `results/cv_folds.tsv` lists the folds we used;
+* three annotated tracks are not part of our evaluation: `Schumann_Toccata_WangY07M` and `Schumann_Toccata_no_repeat_DupreeF13M` (`asap`), and `hainsworth_179` (`hainsworth`).
 
 ## License
 
