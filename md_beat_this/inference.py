@@ -7,7 +7,7 @@ from beat_this.inference import zeropad
 from beat_this.utils import save_beat_tsv
 
 from md_beat_this.diffusion import unmask
-from md_beat_this.model.beat_tracker import BeatThisDiff
+from md_beat_this.model.beat_tracker import MDBeatThis
 from md_beat_this.preprocessing import (
     SAMPLE_RATE,
     LogMelSpect,
@@ -57,7 +57,7 @@ def load_models(
     checkpoint_path: str,
     device: str | torch.device = "cpu",
     num_models: int | None = None,
-) -> list[BeatThisDiff]:
+) -> list[MDBeatThis]:
     """
     Load the models of the ensemble stored in a checkpoint (see `load_checkpoint`),
     holding their state dicts under "state_dicts". If `num_models` is given, only the
@@ -72,7 +72,7 @@ def load_models(
         )
     models = []
     for state_dict in state_dicts[:num_models]:
-        model = BeatThisDiff()
+        model = MDBeatThis()
         model.load_state_dict(state_dict)
         models.append(model.to(device).eval())
     return models

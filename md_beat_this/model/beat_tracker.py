@@ -18,7 +18,7 @@ from md_beat_this.model import roformer
 MASK, PAD, NO_EVENT, EVENT = 0, 1, 2, 3
 
 
-class BeatThisDiff(nn.Module):
+class MDBeatThis(nn.Module):
     """
     The Beat This! network, additionally conditioned on partially known beat and
     downbeat sequences. It is composed of:
