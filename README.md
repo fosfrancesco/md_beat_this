@@ -1,54 +1,43 @@
 # Masked Diffusion Enables Coherent Beat Tracking
 
-**This repo is still under construction. It could change** 
+Official inference code and pretrained models for the ISMIR 2026 paper "[Masked Diffusion Enables Coherent Beat Tracking](https://arxiv.org/abs/2608.04624)" by Francesco Foscarin, Filip Korzeniowski and Richard Vogl. This work was done at [Moises AI](https://moises.ai). If you use this work, please [cite the paper](#citation).
 
-Official inference code and models for the ISMIR 2026 paper "[Masked Diffusion Enables Coherent Beat Tracking](https://arxiv.org/abs/2608.04624)" by Francesco Foscarin, Filip Korzeniowski and Richard Vogl. Please [cite the paper](#citation) if you use any of this work.
+> **For research only.** These models were developed and released for research purposes only, under a [non-commercial license](#license). If you need beat and downbeat annotations for commercial use, you can get them through [Music.AI](https://music.ai) or the [Moises mobile app](https://moises.ai). These services rely on a separate model, built from the ground up for commercial use and offering improved accuracy.
 
-You can use the released models to detect beats and downbeats in your own audio files. We do not release training code or audio, but we provide our predictions for all evaluation datasets (and the activations for GTZAN), so results can be explored and metrics recomputed. We also report 8-fold cross-validation results (not in the paper) and an expanded version of Figure 4.
+## Contents
 
-* [Inference](#inference)
+* [Installation](#installation)
+* [Quick start](#quick-start)
+* [Usage](#usage)
 * [Available models](#available-models)
-* [Differences from Beat This!](#differences-from-beat-this)
 * [Released predictions and activations](#released-predictions-and-activations)
 * [Results](#results)
 * [Reproducing the results](#reproducing-the-results)
+* [Differences from Beat This!](#differences-from-beat-this)
 * [License](#license)
 * [Citation](#citation)
 
-## Inference
-
-To predict beats for audio files, you can use the command line tool or call the beat tracker from Python.
-
-### Requirements
+## Installation
 
 1. [Install PyTorch](https://pytorch.org/get-started/locally/) following the instructions for your platform.
 2. Install [ffmpeg](https://ffmpeg.org/), which is used to decode audio files.
+3. Install the package:
 
-Then install the package with:
 ```bash
 pip install https://github.com/fosfrancesco/md_beat_this/archive/main.zip
 ```
-or, from a clone of this repository, with `pip install .`.
 
-### Command line
+Alternatively, from a clone of this repository, run `pip install .`.
 
-The package installs a command line tool called `md_beat_this`. To see all options, run:
-```bash
-md_beat_this --help
-```
-The basic usage is:
+## Quick start
+
+From the command line:
+
 ```bash
 md_beat_this path/to/audio.file -o path/to/output.beats.txt
 ```
-To process multiple files, pass multiple input files or directories, and an output directory:
-```bash
-md_beat_this path/to/*.mp3 path/to/whole_directory/ -o path/to/output_directory --skip-existing
-```
-Without `-o`, outputs are saved next to each input file. Each output line holds a beat time in seconds, a tab, and the beat number within the bar (`1` for downbeats), as in [Beat This!](https://github.com/CPJKU/beat_this).
 
-The tool uses the first GPU by default and falls back to CPU if none is available; pass `--gpu=-1` to force the CPU. Use `-m` to pick another [model](#available-models), and `--steps` to change the number of unmasking steps (default 8, as in the paper). The `run*` models are ensembles of 3 models; pass `--num-models 1` or `--num-models 2` to only use the first one or two, which is faster but slightly less accurate (see the [step study](#step-study)).
-
-### Python
+From Python:
 
 ```python
 from md_beat_this.inference import File2Beats
@@ -56,7 +45,38 @@ from md_beat_this.inference import File2Beats
 file2beats = File2Beats(checkpoint_path="run1", device="cuda", steps=8, snippets=True)
 beats, downbeats = file2beats("path/to/audio.file")
 ```
-If you already have an audio signal loaded, use `Audio2Beats` and pass the signal and its sample rate. `File2File` writes the output file directly. Pass `num_models=1` or `num_models=2` to only use the first models of the ensemble.
+
+## Usage
+
+### Command line
+
+The package installs a command line tool called `md_beat_this`. To see all options, run:
+
+```bash
+md_beat_this --help
+```
+
+To process multiple files, pass multiple input files or directories, and an output directory:
+
+```bash
+md_beat_this path/to/*.mp3 path/to/whole_directory/ -o path/to/output_directory --skip-existing
+```
+
+Without `-o`, outputs are saved next to each input file. Each output line holds a beat time in seconds, a tab, and the beat number within the bar (`1` for downbeats), as in [Beat This!](https://github.com/CPJKU/beat_this).
+
+Main options:
+
+| Option | Description |
+| --- | --- |
+| `-m`, `--model` | The [model](#available-models) to use (default `run1`). |
+| `--steps` | Number of unmasking steps (default 8, as in the paper). |
+| `--num-models` | For the `run*` ensembles of 3 models, use only the first 1 or 2 models. This is faster but slightly less accurate (see the [step study](#step-study)). |
+| `--gpu` | GPU index. The first GPU is used by default, with a fallback to CPU if none is available. Pass `--gpu=-1` to force the CPU. |
+| `--snippets` / `--no-snippets` | How to process long audio (see [Long audio files](#long-audio-files)). |
+
+### Python
+
+`File2Beats` returns the beat and downbeat times for an audio file, as in the [quick start](#quick-start). If you already have an audio signal loaded, use `Audio2Beats` and pass the signal and its sample rate. `File2File` writes the output file directly. Pass `num_models=1` or `num_models=2` to use only the first models of the ensemble.
 
 ### Long audio files
 
@@ -68,12 +88,14 @@ With `--no-snippets` (`snippets=False` in Python), the whole audio is processed 
 
 Models are downloaded automatically on first use from the [GitHub release](https://github.com/fosfrancesco/md_beat_this/releases/tag/v1.0) and cached by `torch.hub`. Select one with `-m` on the command line or `checkpoint_path` in Python:
 
-* `run1` (default), `run2`, `run3`: three ensembles of 3 models each, trained from independent seeds with GTZAN held out as the test set. These produce the [GTZAN results](#gtzan).
-* `fold0` to `fold7`: single models from the 8-fold cross-validation. These produce the [cross-validation results](#cross-validation). `results/cv_folds.tsv` lists the fold of each track.
+| Model | Description |
+| --- | --- |
+| `run1` (default), `run2`, `run3` | Three ensembles of 3 models each, trained from independent seeds with GTZAN held out as the test set. They produce the [GTZAN results](#gtzan). |
+| `fold0` to `fold7` | Single models from the 8-fold cross-validation. They produce the [cross-validation results](#cross-validation). `results/cv_folds.tsv` lists the fold of each track. |
 
 You can also pass the path of a local checkpoint file or a URL.
 
-Results may be unfairly good on files the models were trained on. Use the `run*` models for GTZAN or your own data; for the other datasets we used, use the fold model that held each track out.
+> **Note:** Results may be unfairly good on files the models were trained on. Use the `run*` models for GTZAN or your own data. For the other datasets we used, use the fold model that held each track out.
 
 ## Released predictions and activations
 
@@ -160,19 +182,22 @@ git clone --branch v1.1 --depth 1 https://github.com/CPJKU/beat_this_annotations
 pip install mir_eval numpy
 python reproduction/evaluate.py --ann-root ./beat_this_annotations
 ```
+
 Pass `--only-gtzan` to print only the GTZAN table, and `--pred-root` to read predictions from another folder. Datasets without predictions are skipped.
 
 ### Recomputing the predictions
 
 If you have the audio, `reproduction/reproduce.py` recomputes our predictions with the released models. Put the audio files at `<audio-root>/<dataset>/<track>.<ext>`, named after the stems of the beat_this_annotations beat files (e.g. `gtzan/gtzan_blues_00000.wav`), and run:
+
 ```bash
 pip install ".[eval]"
 python reproduction/reproduce.py gtzan --audio-root path/to/audio -o my_predictions
 python reproduction/reproduce.py cv --audio-root path/to/audio -o my_predictions
 python reproduction/evaluate.py --pred-root my_predictions --ann-root ./beat_this_annotations
 ```
+
 * `gtzan` processes each GTZAN track with the three ensembles, in a single chunk.
-* `cv` processes each track in snippets, with the fold model that held it out (listed in `results/cv_folds.tsv`). Pass `--datasets smc hainsworth` to only process some datasets.
+* `cv` processes each track in snippets, with the fold model that held it out (listed in `results/cv_folds.tsv`). Pass `--datasets smc hainsworth` to process only some datasets.
 
 Predictions are written with the layout of `results/`. Pass `--checkpoint-dir` to read the models from a local folder instead of downloading them. Small differences from our predictions are expected:
 
@@ -195,10 +220,10 @@ On top of the masked diffusion formulation (see the paper), we changed:
 * 300 training epochs instead of 150;
 * WSD (warmup-stable-decay) learning rate schedule instead of cosine, with 1000 warm-up steps and linear decay over the last 15% of steps;
 * leading and trailing silence is trimmed before inference (100 ms windows with an RMS below 1.5 × 10⁻³).
+
 ### Unintended
 
-Some differences were introduced by mistake when reimplementing our training code, 
-we expect them to not significantly influence the results:
+Some differences were introduced by mistake when reimplementing our training code. We expect them not to significantly influence the results:
 
 * the input spectrogram differs slightly (the inference code keeps these differences, since the models were trained with them):
   * the mel filters go up to 10 kHz instead of 11 kHz;
@@ -212,7 +237,15 @@ we expect them to not significantly influence the results:
 
 The code, the model weights, the predictions and the activations are licensed under [CC BY-NC 4.0](LICENSE) ([Creative Commons Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/)): you can use and adapt them for non-commercial purposes, with attribution.
 
+For commercial beat and downbeat annotations, see [Music.AI](https://music.ai) or the [Moises mobile app](https://moises.ai).
+
+## Acknowledgements
+
+This work was done at [Moises AI](https://moises.ai). It builds on [Beat This!](https://github.com/CPJKU/beat_this) and uses the annotations from [beat_this_annotations](https://github.com/CPJKU/beat_this_annotations).
+
 ## Citation
+
+If you use any of the masked diffusion techniques described in this paper for beat tracking or other MIR tasks, please cite:
 
 ```bibtex
 @inproceedings{foscarin2026maskedbeat,
@@ -220,5 +253,16 @@ The code, the model weights, the predictions and the activations are licensed un
     title = {Masked Diffusion Enables Coherent Beat Tracking},
     booktitle = {Proceedings of the 27th International Society for Music Information Retrieval Conference (ISMIR)},
     year = 2026,
+}
+```
+
+If you use the released models, or any of the datasets, augmentations or other techniques that come from Beat This!, please also cite:
+
+```bibtex
+@inproceedings{foscarin2024beatthis,
+    author = {Francesco Foscarin and Jan Schl{\"u}ter and Gerhard Widmer},
+    title = {Beat this! Accurate beat tracking without DBN postprocessing},
+    booktitle = {Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR)},
+    year = 2024,
 }
 ```
